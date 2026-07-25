@@ -1,4 +1,4 @@
-# ui/ui_theme.py
+
 """
 UI Theme y componentes visuales para la aplicación BiblioRUA.
 Soporta CustomTkinter con fallback a Tkinter estándar.
@@ -13,7 +13,7 @@ try:
 except ImportError:
     HAS_CTK = False
 
-# Paleta de colores moderna RUA / UNAH
+# Paleta de colores
 COLORS = {
     "navy": "#1E293B",
     "gold": "#D97706",

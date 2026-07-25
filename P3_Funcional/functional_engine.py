@@ -1,4 +1,4 @@
-# P3_Funcional/functional_engine.py
+
 """
 PARADIGMA 3: PROGRAMACION FUNCIONAL
 Inmutabilidad, filter, map, reduce, lambdas y recursividad sobre estructuras jerárquicas.

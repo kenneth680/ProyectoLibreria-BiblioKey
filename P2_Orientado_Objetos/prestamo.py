@@ -1,6 +1,6 @@
 # P2_Orientado_Objetos/prestamo.py
 """
-PARADIGMA 2: ORIENTADO A OBJETOS (POO)
+PARADIGMA 2: ORIENTADO A OBJETOS
 Entidad Préstamo con soporte para fechas personalizadas y cálculo de multa.
 """
 

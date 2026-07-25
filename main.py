@@ -3,7 +3,7 @@
 Sistema Inteligente de Biblioteca Universitaria (BiblioKEY)
 Integración Total de los 5 Paradigmas de Programación
 Kenneth Ramirez 20241900233
-Yankel Martinez 20241900146
+Yankel Martinez 20251900146
 Elda Velasquez 20241930024
 ==================================================================
 1. Imperativo: Control de flujo secuencial, validaciones y ciclo de vida.
@@ -18,7 +18,7 @@ import sys
 from datetime import date, timedelta
 from typing import List
 
-# Importación de Módulos del Sistema (Los 5 Paradigmas)
+# Importación de Módulos del Sistema
 from models.usuario import Estudiante, Docente, Usuario
 from models.libro import Libro
 from models.prestamo import Prestamo

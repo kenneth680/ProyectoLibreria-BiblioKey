@@ -1,6 +1,6 @@
 # P2_Orientado_Objetos/usuario.py
 """
-PARADIGMA 2: ORIENTADO A OBJETOS (POO)
+PARADIGMA 2: ORIENTADO A OBJETOS
 Encapsulamiento, Herencia y Polimorfismo.
 """
 

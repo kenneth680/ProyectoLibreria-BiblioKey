@@ -24,6 +24,7 @@ from modules.functional_engine import (
 from modules.logic_engine import LogicEngine
 from events.event_bus import bus_global, Event
 from ui.ui_theme import COLORS, FONT_SECTION, FONT_BODY, FONT_SMALL, StatusBadge
+import database
 
 
 if ctk is None:
@@ -61,6 +62,33 @@ USUARIOS_BASE = [
 LISTA_PRESTAMOS: List[Prestamo] = []
 
 motor_logico = LogicEngine()
+
+
+# ============================================================
+# INICIALIZACIÓN DE LA BASE DE DATOS 
+# ============================================================
+
+database.init_db()
+database.sincronizar_catalogo_inicial(CATALOGO_LIBROS)
+database.sincronizar_usuarios_inicial(USUARIOS_BASE)
+
+# Sincronizar disponibilidad de libros desde lo guardado en disco
+_disponibilidad_guardada = database.cargar_disponibilidad_libros()
+for _libro in CATALOGO_LIBROS:
+    if _disponibilidad_guardada.get(_libro.titulo) is False:
+        _libro.prestar()
+
+# Reconstruir en memoria los préstamos que ya estaban guardados en disco
+for _reg in database.cargar_prestamos_guardados():
+    _usr = next((u for u in USUARIOS_BASE if u.cuenta == _reg["usuario_cuenta"]), None)
+    _lib = next((l for l in CATALOGO_LIBROS if l.titulo == _reg["libro_titulo"]), None)
+    if _usr is None or _lib is None:
+        continue  # Registro huérfano (usuario o libro ya no existe en el catálogo actual)
+    _p = Prestamo(_usr, _lib, fecha_prestamo=datetime.strptime(_reg["fecha_prestamo"], "%Y-%m-%d").date())
+    _p._fecha_devolucion = datetime.strptime(_reg["fecha_devolucion"], "%Y-%m-%d").date()
+    if _reg["devuelto"]:
+        _p._devuelto = True
+    LISTA_PRESTAMOS.append(_p)
 
 
 # ============================================================
@@ -194,7 +222,7 @@ class BiblioRUAApp(ctk.CTk):
             self._render_vista_consultas()
 
     # ============================================================
-    # VISTA 1: PRESTAMOS (CON OPCION DE MARCAR ENTREGADOS / DEVOLUCION)
+    # VISTA 1: PRESTAMOS CON OPCION DE MARCAR ENTREGADOS / DEVOLUCION
     # ============================================================
     def _render_vista_prestamos(self):
         for widget in self.view_card.winfo_children():
@@ -326,6 +354,8 @@ class BiblioRUAApp(ctk.CTk):
             p = Prestamo(usuario_obj, libro, fecha_prestamo=fecha_prestamo, dias_permitidos=dias_permitidos)
             LISTA_PRESTAMOS.append(p)
             libro.prestar()
+            database.guardar_prestamo(p)
+            database.actualizar_disponibilidad_libro(libro.titulo, False)
             bus_global.publish("PRESTAMO_CREADO", {"prestamo": p.to_dict()})
             self.mostrar_seccion("prestamos")
 
@@ -341,12 +371,24 @@ class BiblioRUAApp(ctk.CTk):
 
         def entregar_prestamo(target_prestamo: Prestamo):
             target_prestamo.marcar_devuelto()
+            database.marcar_prestamo_devuelto(
+                target_prestamo.usuario.cuenta,
+                target_prestamo.libro.titulo,
+                target_prestamo.fecha_prestamo.strftime("%Y-%m-%d"),
+            )
+            database.actualizar_disponibilidad_libro(target_prestamo.libro.titulo, True)
             bus_global.publish("LIBRO_DEVUELTO", {"prestamo": target_prestamo.to_dict()})
             self.mostrar_seccion("prestamos")
 
         def eliminar_registro_prestamo(target_prestamo: Prestamo):
             if target_prestamo in LISTA_PRESTAMOS:
                 target_prestamo.libro.devolver()
+                database.eliminar_prestamo(
+                    target_prestamo.usuario.cuenta,
+                    target_prestamo.libro.titulo,
+                    target_prestamo.fecha_prestamo.strftime("%Y-%m-%d"),
+                )
+                database.actualizar_disponibilidad_libro(target_prestamo.libro.titulo, True)
                 LISTA_PRESTAMOS.remove(target_prestamo)
                 self.mostrar_seccion("prestamos")
 
@@ -712,6 +754,8 @@ class BiblioRUAApp(ctk.CTk):
                     nuevo_p = Prestamo(usr, libro_target)
                     LISTA_PRESTAMOS.append(nuevo_p)
                     libro_target.prestar()
+                    database.guardar_prestamo(nuevo_p)
+                    database.actualizar_disponibilidad_libro(libro_target.titulo, False)
                     bus_global.publish("PRESTAMO_CREADO", {"prestamo": nuevo_p.to_dict()})
                     lbl_rec_msg.configure(text=f"\u2705 Préstamo registrado: {libro_target.titulo}", text_color="#10B981")
                     self._render_vista_recomendaciones(usuario_sel_idx=usuario_sel_idx)
@@ -774,68 +818,59 @@ class BiblioRUAApp(ctk.CTk):
         card_q = ctk.CTkFrame(scroll, fg_color=COLORS["white"], corner_radius=16, border_width=1, border_color="#E2E8F0")
         card_q.pack(fill="x")
 
-        # Configuración según la consulta seleccionada
+        # ── Configuración según la consulta seleccionada (SQL real vía SQLite) ──
         if self.active_query == "disponibles":
-            title_text = "Libros disponibles"
-            sql_text = "Aqui se Muestran los libros disponibles"
+            title_text = "Libros disponibles (Consulta SELECT + WHERE)"
+            sql_text = database.SQL_DISPONIBLES
             headers = [("Título", 180), ("Autor", 150), ("Categoría", 140), ("Estado", 100)]
             filas_data = [
-                (l.titulo, l.autor, l.categoria, "Disponible")
-                for l in CATALOGO_LIBROS if l.disponible
+                (titulo, autor, categoria, "Disponible")
+                for (titulo, autor, categoria, anio) in database.ejecutar_consulta(sql_text)
             ]
+
         elif self.active_query == "vencidos":
             TARIFA_POR_DIA = 15.0  # L15.00 por día de atraso
-            title_text = "Préstamos vencidos — Penalización: L15.00/día"
-            sql_text = "Aqui se Mostraran los prestamos vencidos(Morosos)"
+            title_text = "Préstamos vencidos — Penalización: L15.00/día (Consulta de Inferencia / Auditoría)"
+            sql_text = database.SQL_VENCIDOS
             headers = [("Estudiante", 150), ("Libro", 160), ("Fecha devolución", 120), ("Días atraso", 80), ("Multa (L)", 90)]
-            filas_data = [
-                (
-                    p.usuario.nombre,
-                    p.libro.titulo,
-                    p.fecha_devolucion.strftime("%d/%m/%Y"),
-                    str(abs(p.dias_restantes())) + " días",
-                    f"L {p.calcular_multa(TARIFA_POR_DIA):.2f}"
-                )
-                for p in LISTA_PRESTAMOS if p.esta_vencido()
-            ]
-            if not filas_data:
-                filas_data = [
-                    ("Juan Orlando Hernandez", "El último Avión", "24/06/2026", "7 días", "L 105.00"),
-                    ("Patty Burgos", "Bailando Punta", "27/06/2026", "4 días", "L 60.00")
-                ]
+            filas_data = []
+            hoy = date.today()
+            for (nombre, titulo, fecha_devolucion_str) in database.ejecutar_consulta(sql_text):
+                fecha_dev = datetime.strptime(fecha_devolucion_str, "%Y-%m-%d").date()
+                dias_atraso = (hoy - fecha_dev).days
+                multa = dias_atraso * TARIFA_POR_DIA
+                filas_data.append((
+                    nombre, titulo, fecha_dev.strftime("%d/%m/%Y"),
+                    f"{dias_atraso} días", f"L {multa:.2f}"
+                ))
+
         elif self.active_query == "mas_prestado":
-            title_text = "Más prestado por categoría"
-            sql_text = "Aqui se muestran los Libros mas rentados por categoria"
+            title_text = "Más prestado por categoría (GROUP BY + ORDER BY)"
+            sql_text = database.SQL_MAS_PRESTADO
             headers = [("Categoría", 160), ("Libro", 200), ("Autor", 140), ("Total Préstamos", 100)]
-            # ── Calcular datos reales desde LISTA_PRESTAMOS 
-            from functools import reduce
-            conteo: Dict[str, dict] = reduce(
-                lambda acc, p: {
-                    **acc,
-                    p.libro.titulo: {
-                        "titulo": p.libro.titulo,
-                        "autor": p.libro.autor,
-                        "categoria": p.libro.categoria,
-                        "total": acc.get(p.libro.titulo, {}).get("total", 0) + 1
-                    }
-                },
-                LISTA_PRESTAMOS,
-                {}
-            )
             filas_data = [
-                (info["categoria"], info["titulo"], info["autor"], f"{info['total']} préstamo{'s' if info['total'] != 1 else ''}")
-                for info in sorted(conteo.values(), key=lambda x: x["total"], reverse=True)
+                (categoria, titulo, autor, f"{total} préstamo{'s' if total != 1 else ''}")
+                for (categoria, titulo, autor, total) in database.ejecutar_consulta(sql_text)
             ]
             if not filas_data:
                 filas_data = [("Sin datos", "Registra préstamos para ver estadísticas", "-", "0 préstamos")]
+
         else:  # historial
-            title_text = "Historial completo de préstamos"
-            sql_text = "Historial de los prestamos realizado"
+            title_text = "Historial completo de préstamos (JOIN + Auditoría)"
+            sql_text = database.SQL_HISTORIAL
             headers = [("Estudiante", 160), ("Libro", 180), ("Fecha Préstamo", 130), ("Estado", 100)]
-            filas_data = [
-                (p.usuario.nombre, p.libro.titulo, p.fecha_prestamo.strftime("%d/%m/%Y"), "Devuelto" if p.devuelto else ("Atrasado" if p.esta_vencido() else "Vigente"))
-                for p in LISTA_PRESTAMOS
-            ]
+            filas_data = []
+            hoy = date.today()
+            for (nombre, titulo, fecha_prestamo_str, fecha_devolucion_str, devuelto) in database.ejecutar_consulta(sql_text):
+                fecha_p = datetime.strptime(fecha_prestamo_str, "%Y-%m-%d").date()
+                fecha_d = datetime.strptime(fecha_devolucion_str, "%Y-%m-%d").date()
+                if devuelto:
+                    estado = "Devuelto"
+                elif hoy > fecha_d:
+                    estado = "Atrasado"
+                else:
+                    estado = "Vigente"
+                filas_data.append((nombre, titulo, fecha_p.strftime("%d/%m/%Y"), estado))
 
         # ── Encabezado de la tarjeta: título + botón de descarga ──────────────
         head_row = ctk.CTkFrame(card_q, fg_color="transparent")

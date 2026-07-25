@@ -1,4 +1,4 @@
-# 📚 BiblioKEY / BiblioRUA
+# BiblioKEY / BiblioRUA
 ### Sistema Inteligente de Biblioteca Universitaria
 **Integración de los 5 Paradigmas de Programación**
 
@@ -22,7 +22,7 @@ sistema_biblioteca_5_paradigmas/
 │   ├── README.md
 │   └── functional_engine.py (copia de referencia)
 │
-├── P4_Eventos/             ← Paradigma 4: Orientado a Eventos
+├── P4_Declarativo/             ← Paradigma 4: Declarativo
 │   ├── README.md
 │   └── event_bus.py        (copia de referencia)
 │
@@ -50,13 +50,13 @@ sistema_biblioteca_5_paradigmas/
 ├── tests/                  ← Pruebas unitarias
 │   └── test_paradigmas.py
 │
-├── app_gui.py              ← 🚀 PUNTO DE ENTRADA (GUI)
-└── main.py                 ← 🖥 Demo en consola
+├── app_gui.py              ←  PUNTO DE ENTRADA (GUI)
+└── main.py                 ←  Demo en consola
 ```
 
 ---
 
-## 🚀 Cómo ejecutar
+##  Cómo ejecutar
 
 ```bash
 # Instalar dependencias
@@ -74,7 +74,7 @@ python -m pytest tests/ -v
 
 ---
 
-## 🧩 Los 5 Paradigmas en un vistazo
+##  Los 5 Paradigmas en un vistazo
 
 | # | Paradigma | Carpeta | Archivos clave | Concepto demostrado |
 |---|---|---|---|---|
@@ -93,12 +93,12 @@ Se calcula automáticamente en la sección **Consultas → Préstamos vencidos**
 
 ---
 
-## 📋 Características principales
+##  Características principales
 
-- ✅ Registro de préstamos con **fecha personalizable** (para pruebas con fechas pasadas)
-- ✅ Marcado de entregados y eliminación de registros
-- ✅ Detección automática de libros vencidos con cálculo de multa
-- ✅ Catálogo de libros con filtros por categoría
-- ✅ Estadísticas funcionales (map · filter · reduce · recursividad)
-- ✅ Recomendaciones basadas en motor Prolog
-- ✅ Consultas declarativas tipo SQL con resultados dinámicos
+-  Registro de préstamos con **fecha personalizable** (para pruebas con fechas pasadas)
+-  Marcado de entregados y eliminación de registros
+-  Detección automática de libros vencidos con cálculo de multa
+-  Catálogo de libros con filtros por categoría
+-  Estadísticas funcionales (map · filter · reduce · recursividad)
+-  Recomendaciones basadas en motor Prolog
+-  Consultas declarativas tipo SQL con resultados dinámicos

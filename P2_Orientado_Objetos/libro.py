@@ -1,6 +1,6 @@
 # P2_Orientado_Objetos/libro.py
 """
-PARADIGMA 2: ORIENTADO A OBJETOS (POO)
+PARADIGMA 2: ORIENTADO A OBJETOS
 Entidad Libro con métodos para manipular disponibilidad.
 """
 
