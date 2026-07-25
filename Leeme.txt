@@ -1,0 +1,1 @@
+No se les olvide instalar las librerías para que funcione "python -m pip install customtkinter tkcalendar"
