@@ -2,12 +2,14 @@
 #Yankel Martinez 20241900146
 #Elda Velasquez 20241930024
 import sys
+import csv
 from datetime import date, datetime, timedelta
 from typing import List, Dict, Any
 
 try:
     import customtkinter as ctk
     from tkcalendar import DateEntry
+    from tkinter import filedialog, messagebox
 except ImportError:
     ctk = None
 
@@ -774,8 +776,8 @@ class BiblioRUAApp(ctk.CTk):
 
         # Configuración según la consulta seleccionada
         if self.active_query == "disponibles":
-            title_text = "Libros disponibles (Consulta SELECT + WHERE)"
-            sql_text = "SELECT titulo, autor, categoria, anio\nFROM Libros\nWHERE disponible = TRUE\nORDER BY categoria, titulo;"
+            title_text = "Libros disponibles"
+            sql_text = "Aqui se Muestran los libros disponibles"
             headers = [("Título", 180), ("Autor", 150), ("Categoría", 140), ("Estado", 100)]
             filas_data = [
                 (l.titulo, l.autor, l.categoria, "Disponible")
@@ -783,8 +785,8 @@ class BiblioRUAApp(ctk.CTk):
             ]
         elif self.active_query == "vencidos":
             TARIFA_POR_DIA = 15.0  # L15.00 por día de atraso
-            title_text = "Préstamos vencidos — Penalización: L15.00/día (Consulta de Inferencia / Auditoría)"
-            sql_text = "SELECT u.nombre, l.titulo, p.fecha_devolucion, DATEDIFF(DATE('now'), p.fecha_devolucion) AS dias_atraso,\n       DATEDIFF(DATE('now'), p.fecha_devolucion) * 15 AS multa_lps\nFROM Prestamos p JOIN Usuarios u ON p.usuario_id = u.id\nJOIN Libros l ON p.libro_id = l.id\nWHERE p.fecha_devolucion < DATE('now') AND p.devuelto = FALSE;"
+            title_text = "Préstamos vencidos — Penalización: L15.00/día"
+            sql_text = "Aqui se Mostraran los prestamos vencidos(Morosos)"
             headers = [("Estudiante", 150), ("Libro", 160), ("Fecha devolución", 120), ("Días atraso", 80), ("Multa (L)", 90)]
             filas_data = [
                 (
@@ -802,10 +804,10 @@ class BiblioRUAApp(ctk.CTk):
                     ("Patty Burgos", "Bailando Punta", "27/06/2026", "4 días", "L 60.00")
                 ]
         elif self.active_query == "mas_prestado":
-            title_text = "Más prestado por categoría (GROUP BY + ORDER BY)"
-            sql_text = "SELECT l.categoria, l.titulo, COUNT(p.id) AS total_prestamos\nFROM Prestamos p JOIN Libros l ON p.libro_id = l.id\nGROUP BY l.id ORDER BY total_prestamos DESC;"
+            title_text = "Más prestado por categoría"
+            sql_text = "Aqui se muestran los Libros mas rentados por categoria"
             headers = [("Categoría", 160), ("Libro", 200), ("Autor", 140), ("Total Préstamos", 100)]
-            # ── Calcular datos reales desde LISTA_PRESTAMOS ──────────────────────
+            # ── Calcular datos reales desde LISTA_PRESTAMOS 
             from functools import reduce
             conteo: Dict[str, dict] = reduce(
                 lambda acc, p: {
@@ -827,15 +829,49 @@ class BiblioRUAApp(ctk.CTk):
             if not filas_data:
                 filas_data = [("Sin datos", "Registra préstamos para ver estadísticas", "-", "0 préstamos")]
         else:  # historial
-            title_text = "Historial completo de préstamos (JOIN + Auditoría)"
-            sql_text = "SELECT u.nombre, l.titulo, p.fecha_prestamo, p.devuelto\nFROM Prestamos p JOIN Usuarios u ON p.usuario_id = u.id\nJOIN Libros l ON p.libro_id = l.id\nORDER BY p.fecha_prestamo DESC;"
+            title_text = "Historial completo de préstamos"
+            sql_text = "Historial de los prestamos realizado"
             headers = [("Estudiante", 160), ("Libro", 180), ("Fecha Préstamo", 130), ("Estado", 100)]
             filas_data = [
                 (p.usuario.nombre, p.libro.titulo, p.fecha_prestamo.strftime("%d/%m/%Y"), "Devuelto" if p.devuelto else ("Atrasado" if p.esta_vencido() else "Vigente"))
                 for p in LISTA_PRESTAMOS
             ]
 
-        ctk.CTkLabel(card_q, text=title_text, font=FONT_SECTION, text_color=COLORS["navy"]).pack(anchor="w", padx=16, pady=(14, 6))
+        # ── Encabezado de la tarjeta: título + botón de descarga ──────────────
+        head_row = ctk.CTkFrame(card_q, fg_color="transparent")
+        head_row.pack(fill="x", padx=16, pady=(14, 6))
+
+        ctk.CTkLabel(head_row, text=title_text, font=FONT_SECTION, text_color=COLORS["navy"]).pack(side="left", anchor="w")
+
+        def _descargar_csv(headers=headers, filas_data=filas_data, nombre_consulta=self.active_query):
+            """Exporta la tabla actualmente visible (según el filtro activo) a un archivo CSV."""
+            nombre_sugerido = f"{nombre_consulta}.csv"
+            ruta = filedialog.asksaveasfilename(
+                defaultextension=".csv",
+                initialfile=nombre_sugerido,
+                filetypes=[("Archivo CSV", "*.csv"), ("Todos los archivos", "*.*")],
+                title="Guardar como"
+            )
+            if not ruta:
+                return  # El usuario canceló el diálogo
+
+            try:
+                with open(ruta, "w", newline="", encoding="utf-8-sig") as f:
+                    writer = csv.writer(f)
+                    writer.writerow([h_name for h_name, _ in headers])
+                    writer.writerows(filas_data)
+                messagebox.showinfo("Descarga completa", f"Archivo guardado correctamente en:\n{ruta}")
+            except Exception as e:
+                messagebox.showerror("Error al guardar", f"No se pudo guardar el archivo:\n{e}")
+
+        btn_descargar = ctk.CTkButton(
+            head_row, text="⬇ Descargar CSV",
+            fg_color=COLORS["gold"], hover_color=COLORS["navy"],
+            text_color=COLORS["white"], font=("Poppins", 11, "bold"),
+            corner_radius=14, height=32, width=150,
+            command=_descargar_csv
+        )
+        btn_descargar.pack(side="right", anchor="e")
 
         sql_lbl = ctk.CTkLabel(
             card_q, text=sql_text, font=("Consolas", 10),

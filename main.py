@@ -9,7 +9,7 @@ Elda Velasquez 20241930024
 1. Imperativo: Control de flujo secuencial, validaciones y ciclo de vida.
 2. POO: Entidades encapsuladas (Usuario, Estudiante, Docente, Libro, Prestamo) con polimorfismo.
 3. Funcional: Inmutabilidad, filter, map, reduce, lambdas y recursividad.
-4. Eventos/Reactivo: EventBus desacoplado con oyentes reactivos.
+4. Declarativo: EventBus desacoplado con oyentes reactivos.
 5. Lógico: Motor de inferencia (Facts/Rules) y deducción de elegibilidad.
 ==================================================================
 """
