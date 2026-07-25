@@ -1,4 +1,4 @@
-# BiblioKEY / BiblioRUA
+# BiblioKEY / BiblioKEY
 ### Sistema Inteligente de Biblioteca Universitaria
 **Integración de los 5 Paradigmas de Programación**
 
