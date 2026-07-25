@@ -1,5 +1,5 @@
 #Kenneth Ramirez 20241900233
-#Yankel Martinez 20241900146
+#Yankel Martinez 20251900146
 #Elda Velasquez 20241930024
 import sys
 import csv
