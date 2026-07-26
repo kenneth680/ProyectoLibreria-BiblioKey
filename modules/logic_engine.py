@@ -1,8 +1,8 @@
 # modules/logic_engine.py
 """
 Paradigma Lógico (Declarativo / Motor de Inferencia).
-Permite definir Hechos (Facts) y Reglas (Rules) para resolver consultas lógicas
-mediante evaluación de condiciones (Unificación y Backtracking).
+Permite definir Hechos y Reglas para resolver consultas lógicas
+mediante evaluación de condiciones.
 """
 
 from typing import Dict, List, Set, Any

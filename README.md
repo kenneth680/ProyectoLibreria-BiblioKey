@@ -4,7 +4,7 @@
 
 ---
 
-## 🗂 Estructura del Proyecto por Paradigma
+##  Estructura del Proyecto por Paradigma
 
 ```
 sistema_biblioteca_5_paradigmas/
@@ -24,7 +24,8 @@ sistema_biblioteca_5_paradigmas/
 │
 ├── P4_Declarativo/             ← Paradigma 4: Declarativo
 │   ├── README.md
-│   └── event_bus.py        (copia de referencia)
+│   ├── database.py          (copia de referencia — SQL real sobre SQLite)
+│   └── event_bus.py        (copia de referencia — extensión: Reactivo)
 │
 ├── P5_Logico/              ← Paradigma 5: Lógico / Declarativo
 │   └── README.md
@@ -50,6 +51,8 @@ sistema_biblioteca_5_paradigmas/
 ├── tests/                  ← Pruebas unitarias
 │   └── test_paradigmas.py
 │
+├── database.py             ←  Acceso a datos SQLite (activo en runtime)
+├── biblioteca.db            ←  Base de datos persistente (se genera automáticamente)
 ├── app_gui.py              ←  PUNTO DE ENTRADA (GUI)
 └── main.py                 ←  Demo en consola
 ```
@@ -67,10 +70,12 @@ python app_gui.py
 
 # Demo en consola (sin GUI)
 python main.py
-
-# Ejecutar pruebas unitarias
-python -m pytest tests/ -v
 ```
+
+> ℹ La base de datos `biblioteca.db` se crea automáticamente en la primera
+> ejecución (usa `sqlite3`, incluido en la librería estándar de Python — no
+> requiere instalación adicional). Los préstamos, usuarios y disponibilidad
+> de libros quedan guardados ahí y persisten aunque se cierre el programa.
 
 ---
 
@@ -81,12 +86,12 @@ python -m pytest tests/ -v
 | 1 | **Imperativo** | `P1_Imperativo/` | `app_gui.py`, `main.py` | Secuencia, selección, iteración |
 | 2 | **Orientado a Objetos** | `P2_Orientado_Objetos/` | `models/*.py` | Herencia, polimorfismo, encapsulamiento |
 | 3 | **Funcional** | `P3_Funcional/` | `modules/functional_engine.py` | `filter`, `map`, `reduce`, recursividad, lambdas |
-| 4 | **Orientado a Eventos** | `P4_Eventos/` | `events/event_bus.py` | Pub/Sub, Observer, reactividad |
+| 4 | **Declarativo** | `P4_Declarativo/` | `database.py` (SQL sobre SQLite) + `event_bus.py` (extensión: Reactivo) | `SELECT`/`JOIN`/`WHERE`/`GROUP BY` reales, persistencia en disco, Pub/Sub |
 | 5 | **Lógico** | `P5_Logico/` | `modules/logic_engine.py`, `rules/*.pl` | Hechos, reglas, inferencia, Prolog |
 
 ---
 
-## ⚙ Multas por retraso
+##  Multas por retraso
 
 La tarifa de penalización es **L 15.00 por día** de atraso.  
 Se calcula automáticamente en la sección **Consultas → Préstamos vencidos**.
@@ -95,10 +100,11 @@ Se calcula automáticamente en la sección **Consultas → Préstamos vencidos**
 
 ##  Características principales
 
--  Registro de préstamos con **fecha personalizable** (para pruebas con fechas pasadas)
+-  Registro de préstamos con fecha personalizabls
 -  Marcado de entregados y eliminación de registros
 -  Detección automática de libros vencidos con cálculo de multa
 -  Catálogo de libros con filtros por categoría
 -  Estadísticas funcionales (map · filter · reduce · recursividad)
 -  Recomendaciones basadas en motor Prolog
--  Consultas declarativas tipo SQL con resultados dinámicos
+-  Consultas declarativas reales en SQL, ejecutadas contra una base de datos SQLite (`database.py`)
+-  Persistencia en disco: préstamos, usuarios y disponibilidad de libros se conservan entre sesiones (`biblioteca.db`)

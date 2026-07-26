@@ -13,7 +13,7 @@ from typing import List, Dict, Any
 
 
 # ------------------------------------------------------------------
-# 1. FILTER + LAMBDA (Funciones puras de filtrado)
+# 1. FILTER + LAMBDA-Funciones puras de filtrado
 # ------------------------------------------------------------------
 def obtener_prestamos_vencidos(lista_prestamos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Aísla inmutablemente préstamos en mora usando filter + lambda."""
@@ -26,7 +26,7 @@ def obtener_libros_por_categoria(lista_libros: List[Dict[str, Any]], categoria: 
 
 
 # ------------------------------------------------------------------
-# 2. MAP + LAMBDA (Transformación de datos)
+# 2. MAP + LAMBDA - Transformación de datos
 # ------------------------------------------------------------------
 def formatear_catalogo_para_reporte(lista_libros: List[Dict[str, Any]]) -> List[str]:
     """Transforma dicts de libros a cadenas 'Título - Autor [Categoría]'."""
@@ -43,7 +43,7 @@ def extraer_titulos_unicos(lista_prestamos: List[Dict[str, Any]]) -> List[str]:
 
 
 # ------------------------------------------------------------------
-# 3. REDUCE + LAMBDA (Agregación de Métricas)
+# 3. REDUCE + LAMBDA - Agregación de Métricas
 # ------------------------------------------------------------------
 def calcular_total_dias_mora(lista_prestamos: List[Dict[str, Any]]) -> int:
     """Suma total de días en mora utilizando reduce + lambda."""
@@ -56,7 +56,7 @@ def calcular_total_dias_mora(lista_prestamos: List[Dict[str, Any]]) -> int:
 
 
 # ------------------------------------------------------------------
-# 4. RECURSIVIDAD (Estructuras Jerárquicas Complejas)
+# 4. RECURSIVIDAD - Estructuras Jerárquicas Complejas
 # ------------------------------------------------------------------
 def total_prestamos_recursivo(nodo_jerarquico: Dict[str, Any]) -> int:
     """
