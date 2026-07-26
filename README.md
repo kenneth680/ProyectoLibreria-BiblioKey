@@ -100,7 +100,7 @@ Se calcula automáticamente en la sección **Consultas → Préstamos vencidos**
 
 ##  Características principales
 
--  Registro de préstamos con fecha personalizabls
+-  Registro de préstamos con fecha personalizables
 -  Marcado de entregados y eliminación de registros
 -  Detección automática de libros vencidos con cálculo de multa
 -  Catálogo de libros con filtros por categoría
